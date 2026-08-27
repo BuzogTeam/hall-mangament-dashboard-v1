@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 231 66% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 231 40% 96%;
+    --accent-foreground: 231 66% 42%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 86%;
+    --ring: 231 66% 52%;
+    --radius: 0.75rem;
+  }
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 39% 11%;
+    --card-foreground: 210 40% 98%;
+    --primary: 232 80% 68%;
+    --primary-foreground: 232 47% 12%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 231 35% 18%;
+    --accent-foreground: 231 80% 80%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 25% 21%;
+    --input: 217 25% 25%;
+    --ring: 232 80% 68%;
+  }
+  * { @apply border-border; }
+  html { min-width: 320px; }
+  body { @apply min-h-screen bg-background text-foreground antialiased; font-family: "Cairo Variable", Cairo, "Noto Sans Arabic", sans-serif; font-synthesis: none; background-image: radial-gradient(circle at 100% 0%, hsl(var(--primary) / .055), transparent 32rem), radial-gradient(circle at 0% 100%, hsl(188 86% 48% / .035), transparent 28rem); }
+  .dark body { background-image: radial-gradient(circle at 100% 0%, hsl(var(--primary) / .09), transparent 34rem), radial-gradient(circle at 0% 100%, hsl(188 86% 48% / .045), transparent 30rem); }
+  button, input, textarea, select { font-family: inherit; }
+  ::selection { background: hsl(var(--primary) / .22); }
+}
+
+@layer components {
+  .page-enter { animation: fade-in .35s ease-out; }
+  .soft-grid { background-image: linear-gradient(to left, hsl(var(--border) / .38) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border) / .38) 1px, transparent 1px); background-size: 26px 26px; }
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted-foreground) / .28) transparent; }
+  .app-main { background-image: linear-gradient(180deg, hsl(var(--background) / .75), hsl(var(--background))); }
+  .surface-card { background: hsl(var(--card) / .88); border: 1px solid hsl(var(--border) / .9); box-shadow: 0 10px 34px -24px rgb(15 23 42 / .32); backdrop-filter: blur(14px); }
+  .eyebrow { color: hsl(var(--primary)); font-size: .68rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+  .focus-ring:focus-visible { outline: none; box-shadow: 0 0 0 3px hsl(var(--primary) / .18); }
+  .print-page-title { display: none; }
+  .status-dot { width: .45rem; height: .45rem; border-radius: 9999px; }
+  .select-control { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-position: left .75rem center; background-repeat: no-repeat; background-size: 1rem; padding-left: 2.25rem !important; }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / .25); border-radius: 999px; }
+
+@media print {
+  .print-hidden { display: none !important; }
+  .print-page-title { display: block; margin-bottom: 1rem; font-size: 1.4rem; font-weight: 800; }
+  body { background: white !important; }
+  * { box-shadow: none !important; }
+}
