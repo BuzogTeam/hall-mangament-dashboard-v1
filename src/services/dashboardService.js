@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase'
-import { getLectureStatus, getTodayDbValue, getDayLabel, getStatusLabel, isReservationActiveNow } from '../lib/utils'
+import { getLectureStatus, getTodayDbValue, getDayLabel, getStatusLabel, isReservationActiveNow, toDateKey } from '../lib/utils'
 import { selectRows } from './baseService'
 import { LECTURE_SELECT } from './lecturesService'
 
@@ -10,7 +10,7 @@ async function count(table) {
 }
 
 async function listOptionalReservations() {
-  const { data, error } = await supabase.from('hall_reservations').select('id,hall_id,day_of_week,start_at,end_at,status')
+  const { data, error } = await supabase.from('hall_reservations').select('id,hall_id,reservation_date,day_of_week,start_at,end_at,status')
   if (error) {
     const missing = error.code === 'PGRST205' || /hall_reservations.*schema cache|does not exist/i.test(error.message || '')
     if (missing) return []
@@ -19,21 +19,34 @@ async function listOptionalReservations() {
   return data || []
 }
 
+async function listOptionalOccurrenceOverrides(date) {
+  const { data, error } = await supabase.from('lecture_occurrence_overrides').select('lecture_id,occurrence_date,status').eq('occurrence_date', date)
+  if (error) {
+    const missing = error.code === 'PGRST205' || /lecture_occurrence_overrides.*schema cache|does not exist/i.test(error.message || '')
+    if (missing) return []
+    throw error
+  }
+  return data || []
+}
+
 export const dashboardService = {
   async getOverview() {
-    const [buildingCount, hallCount, departmentCount, subjectCount, instructorCount, lectureCount, halls, lectures, subjects, reservations] = await Promise.all([
+    const todayDate = toDateKey(new Date())
+    const [buildingCount, hallCount, departmentCount, subjectCount, instructorCount, lectureCount, halls, lectures, subjects, reservations, occurrenceOverrides] = await Promise.all([
       count('buildings'), count('halls'), count('departments'), count('subjects'), count('instructors'), count('lectures'),
       selectRows('halls', 'id,title,booking,type,building_id,building:buildings!halls_building_id_fkey(id,title)'),
       selectRows('lectures', LECTURE_SELECT, (query) => query.order('updated_at', { ascending: false })),
       selectRows('subjects', 'id,type'),
       listOptionalReservations(),
+      listOptionalOccurrenceOverrides(todayDate),
     ])
     const todayKey = getTodayDbValue()
-    const todaysLectures = lectures.filter((lecture) => lecture.day_of_week === todayKey)
+    const occurrenceCanceledIds = new Set(occurrenceOverrides.map((override) => String(override.lecture_id)))
+    const todaysLectures = lectures.filter((lecture) => lecture.day_of_week === todayKey).map((lecture) => ({ ...lecture, occurrenceCanceled: occurrenceCanceledIds.has(String(lecture.id)) }))
     const unavailableHallIds = new Set(halls.filter((hall) => hall.booking).map((hall) => hall.id))
     const reservedHallIds = new Set(reservations.filter((reservation) => isReservationActiveNow(reservation)).map((reservation) => reservation.hall_id))
     const occupiedHallIds = new Set(
-      halls.filter((hall) => !unavailableHallIds.has(hall.id) && !reservedHallIds.has(hall.id) && todaysLectures.some((lecture) => lecture.hall_id === hall.id && getLectureStatus(lecture) === 'live')).map((hall) => hall.id),
+      halls.filter((hall) => !unavailableHallIds.has(hall.id) && !reservedHallIds.has(hall.id) && todaysLectures.some((lecture) => !lecture.occurrenceCanceled && !lecture.canceled && lecture.hall_id === hall.id && getLectureStatus(lecture) === 'live')).map((hall) => hall.id),
     )
     const recent = [
       ...lectures.map((item) => ({ ...item, activityType: 'lecture', activityDate: item.updated_at || item.created_at })),

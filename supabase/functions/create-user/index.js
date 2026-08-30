@@ -31,10 +31,11 @@ Deno.serve(async (request) => {
     const fullName = String(body.full_name || '').trim()
     const role = String(body.role || 'viewer')
     const departmentId = body.department_id || null
-    const scopes = Array.isArray(body.scopes) ? body.scopes : (role === 'department_manager' && departmentId ? [{ department_id: Number(departmentId), level_id: null }] : [])
+    const scopes = Array.isArray(body.scopes) ? body.scopes : []
     const allowedRoles = ['admin', 'schedule_manager', 'department_manager', 'viewer']
     if (!email || !fullName || !allowedRoles.includes(role)) throw new Error('بيانات المستخدم غير صحيحة')
-    if (role === 'department_manager' && !scopes.length) throw new Error('يجب تحديد قسم أو نطاق لمدير القسم')
+    if (role === 'department_manager' && (!departmentId || !scopes.length)) throw new Error('يجب تحديد قسم ونطاق صريح لمدير القسم')
+    if (role === 'department_manager' && scopes.some((scope) => Number(scope.department_id) !== Number(departmentId))) throw new Error('يجب أن تطابق كل Scopes قسم المستخدم')
 
     const { data: invitation, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: { full_name: fullName },

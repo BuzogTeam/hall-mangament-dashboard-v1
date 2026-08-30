@@ -72,7 +72,9 @@ function defaultScopeValues(user) {
   return {
     department_id: user?.department_id ? String(user.department_id) : '',
     scope_department_id: String(allLevelsScope?.department_id || scopes[0]?.department_id || user?.department_id || ''),
-    scope_all_levels: Boolean(allLevelsScope) || (!scopes.length && Boolean(user?.department_id)),
+    // No explicit Scope is fail-closed in the database. Do not silently
+    // convert a legacy manager into an all-level manager while editing.
+    scope_all_levels: Boolean(allLevelsScope),
     scope_level_ids: scopes.filter((scope) => scope.level_id !== null && scope.level_id !== undefined).map((scope) => String(scope.level_id)),
   }
 }
@@ -129,7 +131,7 @@ function DepartmentScopeFields({ register, errors, watch, setValue, departments,
 function ScopeSummary({ row, levels }) {
   if (row.role !== ROLE_KEYS.DEPARTMENT_MANAGER) return <span className="text-muted-foreground">—</span>
   const scopes = row.departmentScopes || []
-  if (!scopes.length) return <Badge variant="warning">كل المستويات (قديم)</Badge>
+  if (!scopes.length) return <Badge variant="warning">لا يوجد Scope (مغلق)</Badge>
   if (scopes.some((scope) => scope.level_id === null || scope.level_id === undefined)) return <Badge variant="info">كل المستويات</Badge>
   const labels = scopes.map((scope) => levels.find((level) => level.id === scope.level_id)?.title || `#${scope.level_id}`)
   return <span className="max-w-48 truncate text-xs font-semibold">{labels.join('، ')}</span>

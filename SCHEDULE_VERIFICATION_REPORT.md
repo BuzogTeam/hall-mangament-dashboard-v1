@@ -63,10 +63,16 @@
 
 ### مستخدم Viewer وDepartment Manager
 
-تم اختبار حماية anon، لكن لم توجد كلمات مرور لاختبار مستخدم Viewer أو Department Manager فعليًا. يجب اختبارهما بحسابات منفصلة:
+تم تسجيل الدخول بحساب Department Manager فعلي مرتبط بالقسم 1 والمستوى 2، ونجحت الاختبارات التالية:
 
-- Viewer: لا يستطيع create/update/cancel.
-- Department Manager: لا يستطيع الوصول إلى batch/lecture خارج department_id.
+- عرض department/level/mapping/batches/lectures ضمن Scope فقط.
+- إخفاء batch من قسم آخر.
+- رفض تعديل lecture خارج Scope.
+- رفض إلغاء السلسلة الأسبوعية.
+- نجاح إلغاء وإعادة occurrence داخل Scope.
+- رفض إنشاء أو تفعيل أو تعديل حجوزات القاعات.
+
+لم يتوفر حتى الآن حساب Viewer مستقل بكلمة مرور معروفة لاختبار مسارات Viewer بشكل منفصل؛ يبقى اختبارًا إضافيًا غير مؤثر على حماية Department Manager أو Super Admin.
 
 ## Migrations
 
@@ -74,9 +80,17 @@
 
 ```text
 supabase/migrations/20260826_schedule_hardening.sql
+supabase/migrations/20260827_phase1_scope_occurrence_reservations.sql
+supabase/migrations/20260830_department_manager_temporary_reservation_scope.sql
 ```
 
-وهي تحتوي على RPCs والـ triggers والتاريخ وRLS الجديدة.
+وتحتويان على RPCs والـtriggers والتاريخ وRLS الجديدة، مع بقاء `lectures` كمحاضرات أسبوعية متكررة.
+
+## تحقق Phase 1 بعد التطبيق
+
+بعد تشغيل Migration المرحلة الأولى والإضافة الخاصة بصلاحيات حجوزات مدير القسم، نجح اختبار تكاملي فعلي بحساب Super Admin بعدد 47 تحققًا، ثم أضيفت اختبارات إعادة التفعيل والتعديل وفحص التاريخ المطابق وغير المطابق؛ المجموع 55 تحققًا ناجحًا. شملت الاختبارات Scopes والحجوزات الأسبوعية والمؤقتة وoccurrence و`booking = true` ومنع الكتابة المباشرة. لم يتغير أي صف في `lectures`، وبقيت قيمة `booking` للقاعة المستخدمة في الاختبار كما كانت.
+
+كما تم تنفيذ اختبار UI حقيقي بحساب Department Manager عبر المتصفح، وشمل: رفض الحجز قبل إلغاء occurrence، إلغاء occurrence من Schedule، ظهور القاعة كمحررة، الانتقال المباشر إلى حجز القاعة بالتاريخ والوقت والقسم والمستوى، إخفاء حقل المادة، إنشاء الحجز، تعديله، إلغاؤه وإعادة تفعيله، ثم إعادة occurrence والتحقق من ظهور المحاضرة في الأسبوع التالي. نجح الاختبار بالكامل.
 
 ## التقييم
 
@@ -86,4 +100,4 @@ supabase/migrations/20260826_schedule_hardening.sql
 - History: مثبتة.
 - Conflict Center: مرتبط فعليًا ونتيجته مطابقة للبيانات.
 - Schedule: مطور ومربوط بالبيانات.
-- جاهزية الاستخدام: جاهز للاستخدام الإداري بعد معالجة التعارضين الحاليين، مع ضرورة اختبار Viewer/Department Manager في Staging قبل الإنتاج الكامل.
+- جاهزية الاستخدام: جاهز للاستخدام الإداري بعد معالجة التعارضين الحاليين، مع بقاء اختبار Viewer المستقل كتحقق إضافي.

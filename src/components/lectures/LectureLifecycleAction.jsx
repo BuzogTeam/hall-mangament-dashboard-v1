@@ -39,7 +39,7 @@ export function LectureLifecycleAction({ row }) {
       toast.error(getErrorMessage(error, row.canceled ? 'تعذر إعادة تفعيل المحاضرة بسبب تعارض أو صلاحية غير كافية.' : 'تعذر إلغاء المحاضرة'))
     },
   })
-  if (!can(profile, 'lectures.cancel')) return null
+  if (!can(profile, 'lectures.cancel_series')) return null
   const reactivating = row.canceled
   return <>
     <Button variant="ghost" size="sm" className={reactivating ? 'h-8 text-emerald-600' : 'h-8 text-rose-600'} onClick={() => { setReason(''); setOpen(true) }} disabled={mutation.isPending}>{reactivating ? <><RotateCcw className="h-3.5 w-3.5" />تفعيل</> : <><Ban className="h-3.5 w-3.5" />إلغاء</>}</Button>
@@ -73,7 +73,7 @@ export function LectureHistoryButton({ lecture }) {
       <DialogContent className="max-w-lg">
         <DialogClose onClick={() => setOpen(false)} />
         <DialogHeader><DialogTitle>سجل حالة المحاضرة</DialogTitle><DialogDescription>{lecture.subject?.title || 'محاضرة'} · يحتفظ النظام بتاريخ الإلغاء وإعادة التفعيل.</DialogDescription></DialogHeader>
-        {query.isLoading ? <LoadingState rows={3} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} /> : query.data?.length ? <div className="space-y-2">{query.data.map((item) => <div key={item.id} className="rounded-xl border border-border p-3"><div className="flex flex-wrap items-center justify-between gap-2"><Badge variant={item.new_canceled ? 'danger' : 'success'}>{item.new_canceled ? 'تم الإلغاء' : 'تمت إعادة التفعيل'}</Badge><span className="text-xs text-muted-foreground">{new Date(item.changed_at).toLocaleString('ar-YE')}</span></div><p className="mt-2 text-xs text-muted-foreground">المستخدم: <span dir="ltr" className="font-mono">{item.changed_by ? `${item.changed_by.slice(0, 8)}…` : 'غير معروف'}</span></p>{item.reason ? <p className="mt-1 text-sm leading-6">{item.reason}</p> : null}</div>)}</div> : <EmptyState title="لا يوجد سجل تغييرات" description="ستظهر هنا عمليات الإلغاء وإعادة التفعيل بعد تشغيل Migration السجل." />}
+        {query.isLoading ? <LoadingState rows={3} /> : query.isError ? <ErrorState error={query.error} onRetry={() => query.refetch()} /> : query.data?.length ? <div className="space-y-2">{query.data.map((item) => { const occurrence = item.history_kind === 'occurrence'; return <div key={`${item.history_kind}-${item.id}`} className="rounded-xl border border-border p-3"><div className="flex flex-wrap items-center justify-between gap-2"><Badge variant={item.new_canceled ? 'danger' : 'success'}>{occurrence ? (item.new_canceled ? 'إلغاء occurrence' : 'إعادة occurrence') : (item.new_canceled ? 'إلغاء السلسلة' : 'إعادة تفعيل السلسلة')}</Badge><span className="text-xs text-muted-foreground">{new Date(item.changed_at).toLocaleString('ar-YE')}</span></div>{occurrence ? <p className="mt-2 text-xs font-bold text-primary">التاريخ المحدد: {item.occurrence_date}</p> : null}<p className="mt-2 text-xs text-muted-foreground">المستخدم: <span dir="ltr" className="font-mono">{item.changed_by ? `${item.changed_by.slice(0, 8)}…` : 'غير معروف'}</span></p>{item.reason ? <p className="mt-1 text-sm leading-6">{item.reason}</p> : null}</div> })}</div> : <EmptyState title="لا يوجد سجل تغييرات" description="ستظهر هنا عمليات الإلغاء وإعادة التفعيل بعد تشغيل Migration السجل." />}
         <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>إغلاق</Button></DialogFooter>
       </DialogContent>
     </Dialog>

@@ -155,25 +155,36 @@ lectures_conflict_batch_idx
 
 ### بعد تطبيق الـMigrations الأساسية (التثبيت الحالي)
 
-بما أن `schedule_hardening.sql` تم تطبيقه مسبقًا، لا تعِد تشغيله. لتفعيل نطاقات مديري الأقسام وحجوزات القاعات وتشديد ربطها بالمحاضرات، شغّل Migration واحدة جديدة:
+بما أن `schedule_hardening.sql` تم تطبيقه مسبقًا، لا تعِد تشغيله. لتفعيل نطاقات مديري الأقسام والحجوزات مع الإلغاء المؤقت، شغّل Migration المرحلة الأولى الجديدة:
 
 ```text
-supabase/migrations/20260826_scopes_and_hall_reservations.sql
+supabase/migrations/20260827_phase1_scope_occurrence_reservations.sql
 ```
 
 تضيف هذه Migration:
 
-- جدول `department_levels` لربط الأقسام بالمستويات الفعلية.
-- جدول `department_manager_scopes`.
-- RPC إدارة ربط الأقسام بالمستويات ونطاقات مدير القسم.
-- جدول `hall_reservations` للحجوزات الأسبوعية فقط.
-- RPC إنشاء وتعديل وإلغاء وتفعيل الحجز.
-- منع حجز القاعة عندما `halls.booking = true`.
-- منع محاضرة في قاعة غير متاحة أو محجوزة أسبوعيًا.
-- سياسات RLS حسب مستوى مدير القسم.
-- صلاحيات `hall_reservations.*`.
+- إعادة استخدام `department_levels`, `department_manager_scopes`, و`hall_reservations` الموجودة بدل إنشاء بدائل.
+- `lecture_occurrence_overrides` لإلغاء محاضرة في تاريخ واحد فقط.
+- `lecture_occurrence_history` لتسجيل إلغاء/إعادة occurrence.
+- دعم الحجز الأسبوعي والحجز المؤقت بتاريخ محدد دون تحويل التاريخ إلى يوم أسبوع.
+- RPC إنشاء/تعديل/إلغاء/تفعيل الحجز.
+- RPC إلغاء/إعادة occurrence.
+- منع `booking = true` من الجدولة.
+- Scope-aware RLS لمديري الأقسام.
+- فصل صلاحية `lectures.cancel_series` عن `lectures.cancel_occurrence`.
+- Trigger قاعدة بيانات للحجوزات، مع قفل موحّد يمنع سباق الحجز/المحاضرة وتغيير `halls.booking`.
 
-الـMigration لا تحذف صفوفًا ولا تعدل أعمدة الجداول الأكاديمية الحالية. وتستخدم Policies من نوع RESTRICTIVE للنطاق حتى لا تستطيع Policy قديمة permissive تجاوز Scope؛ لا يتم حذف Policies الموجودة. كما تضيف checks داخل `save_lecture_atomic()` و`set_lecture_canceled_with_reason()` و`uhms_lectures_conflict_guard` لمنع القاعة ذات `booking = true` والحجوزات الأسبوعية. تم تأجيل `reservation_date` إلى مرحلة لاحقة حتى لا يؤثر حجز ليوم واحد على محاضرة أسبوعية. اختبرها في Staging إذا كان Flutter يستخدم حسابات Authenticated بصلاحيات خاصة.
+الـMigration لا تحذف أو تعدل صفوف الجداول الأكاديمية، ولا تحذف Policies أو Triggers غير التابعة لها. الإضافة الوحيدة المقصودة إلى بيانات الصلاحيات هي إضافة مفاتيح المرحلة، مع إزالة منح `lectures.cancel` القديم من دور Department Manager حتى لا يحتفظ بإلغاء السلسلة عالميًا. الحجوزات بتاريخ محدد تقارن مع occurrence لذلك التاريخ فقط، ويجب إلغاء occurrence يدويًا قبل إنشاء حجز يتعارض مع محاضرة؛ لا يوجد إلغاء تلقائي.
+
+إذا كنت قد شغّلت نسخة جزئية من Migration السابقة التي أنشأت الجداول الأولى فقط، استخدم النسخة النهائية للمرحلة الأولى بدل إعادة تشغيل الملف القديم. راجع توافقها مع Flutter قبل التنفيذ، خصوصًا لأن سياسات authenticated للدفعات والمحاضرات أصبحت تعتمد على Scope عند وجوده.
+
+بعد تطبيق Migration المرحلة الأولى، شغّل Migration الإضافة الخاصة بإدارة مدير القسم للحجوزات المؤقتة:
+
+```text
+supabase/migrations/20260830_department_manager_temporary_reservation_scope.sql
+```
+
+هذه الإضافة تستخدم مفاتيح `hall_reservations.*` الموجودة، وتضيف Scope اختياريًا للحجز، وتسمح لمدير القسم بالحجوزات المؤقتة فقط داخل Scope. لا تعِد تشغيل أي Migration قديمة.
 
 لا تحتاج إلى تشغيل الـMigrations المستهدفة القديمة التالية إذا كانت مشاكلها عولجت سابقًا، لأن Migration الشاملة تحتوي سياسات الجداول:
 
@@ -413,13 +424,7 @@ supabase/diagnostics.sql
 
 ### حالة Migration التي تم تشغيلها جزئيًا
 
-إذا تم تشغيل النسخة التي توقفت عند تعليق `SCHEDULE RPC/trigger overrides`، فلا تعِد تشغيل ملف الجداول كاملًا. بعد التأكد من وجود الجداول الجديدة، شغّل Migration الإصلاح الصغيرة:
-
-```text
-supabase/migrations/20260826_complete_scopes_reservations_guards.sql
-```
-
-هي تستبدل تعريفات RPC/Trigger الخاصة بالمحاضرات فقط، وتضيف التحقق من `booking = true` والحجوزات الأسبوعية. لا تنشئ جداول بديلة ولا تحذف بيانات.
+إذا تم تشغيل النسخة التي توقفت عند تعليق `SCHEDULE RPC/trigger overrides`، فلا تعِد تشغيل ملف الجداول القديم ولا Migration الإصلاح القديمة. Migration المرحلة الأولى الحالية أدناه هي النسخة النهائية المتوافقة مع ذلك التنفيذ الجزئي، وتحتوي على تعريفات RPC/Trigger الخاصة بالمحاضرات والحجوزات والإلغاء المؤقت.
 
 ## 12. المشاكل الشائعة
 

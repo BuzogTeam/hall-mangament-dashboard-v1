@@ -32,30 +32,33 @@ where email = 'admin@example.com';
 لتفعيل نطاقات مديري الأقسام وحجوزات القاعات في التثبيت الحالي، وبعد تطبيق `schedule_hardening.sql` مسبقًا، نفّذ Migration الجديدة مرة واحدة من SQL Editor:
 
 ```text
-supabase/migrations/20260826_scopes_and_hall_reservations.sql
+supabase/migrations/20260827_phase1_scope_occurrence_reservations.sql
 ```
 
 تضيف هذه Migration:
 
-- `department_levels` لربط الأقسام بالمستويات الفعلية.
-- `department_manager_scopes` ونطاقات المستوى.
-- `hall_reservations` للحجوزات الأسبوعية فقط في المرحلة الأولى.
+- إعادة استخدام `department_levels` و`department_manager_scopes` و`hall_reservations` الموجودة؛ لا تنشئ هذه Migration جداول مكررة لها.
+- `lecture_occurrence_overrides` للإلغاء المؤقت في تاريخ واحد.
+- `lecture_occurrence_history` لتسجيل تغييرات occurrence.
+- دعم الحجوزات الأسبوعية عبر `day_of_week` أو المؤقتة عبر `reservation_date` دون تحويل التاريخ إلى يوم أسبوع.
 - منع القاعة ذات `booking = true` من الجدولة.
-- ربط الحجوزات الأسبوعية بتعارضات المحاضرات.
-- RPC إدارة النطاقات والحجوزات.
-- Scope-aware RLS للدفعات والمحاضرات.
+- منع تعارضات القاعات في RPC وDatabase Triggers مع قفل موحّد.
+- RPC إدارة النطاقات والحجوزات والإلغاء المؤقت.
+- Scope-aware RLS للدفعات والمحاضرات، مع Fail-Closed عند غياب Scope.
 
-تم تأجيل الحجوزات بتاريخ محدد حتى تتوفر بنية occurrences/terms، ولا يتم تحويل `reservation_date` إلى `day_of_week` بطريقة تسبب تعارضًا وهميًا.
+الحجز المؤقت لا يلغي المحاضرة تلقائيًا؛ يجب إلغاء occurrence أولًا إذا كانت القاعة مشغولة بمحاضرة في ذلك التاريخ.
 
-لا تحذف أي بيانات ولا تعيد تنفيذ Migration الجدول السابقة.
-
-إذا كانت Migration النطاقات والحجوزات قد توقفت عند تعليق `SCHEDULE RPC/trigger overrides`، استخدم بدل إعادة تشغيلها كاملة:
+لتفعيل إدارة مدير القسم للحجوزات المؤقتة داخل Scope فقط، وبعد تشغيل Migration المرحلة الأولى السابقة، شغّل Migration الإضافة:
 
 ```text
-supabase/migrations/20260826_complete_scopes_reservations_guards.sql
+supabase/migrations/20260830_department_manager_temporary_reservation_scope.sql
 ```
 
-هذه Migration إصلاحية فقط لتعريفات RPC/Trigger للمحاضرات، ولا تنشئ جداول بديلة ولا تحذف بيانات.
+تضيف هذه Migration أعمدة Scope اختيارية إلى `hall_reservations` للحفاظ على التوافق مع الحجوزات العامة القديمة، وتمنح Department Manager مفاتيح الحجوزات الموجودة أصلًا، مع قصره على الحجز المؤقت فقط.
+
+لا تحذف هذه Migrations صفوف الجداول الأكاديمية أو تعيد تنفيذ Migrations الجدول السابقة. التغيير المقصود على بيانات التفويض هو منح Department Manager صلاحيات الحجوزات المؤقتة ضمن Scope.
+
+إذا كانت Migration النطاقات والحجوزات قد توقفت عند تعليق `SCHEDULE RPC/trigger overrides`، فلا تعِد تشغيل الملف القديم أو Migration الإصلاح القديمة؛ استخدم Migration المرحلة الأولى الحالية أعلاه.
 
 ## الوظائف المنفذة
 

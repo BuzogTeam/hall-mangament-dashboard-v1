@@ -38,6 +38,30 @@ export function getTodayDbValue(date = new Date()) {
   return DAY_OPTIONS[date.getDay()]?.value || DAY_OPTIONS[0].value
 }
 
+export function toDateKey(date = new Date()) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+export function parseLocalDate(value) {
+  if (!value) return new Date()
+  const [year, month, day] = String(value).split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+export function addDays(date, amount) {
+  const next = new Date(date)
+  next.setDate(next.getDate() + amount)
+  return next
+}
+
+export function getWeekDates(date = new Date()) {
+  const start = addDays(date, -date.getDay())
+  return Array.from({ length: 7 }, (_, index) => addDays(start, index))
+}
+
 export function getDayIndex(value) {
   const index = DAY_OPTIONS.findIndex((day) => day.value === value)
   return index === -1 ? 99 : index
@@ -153,6 +177,7 @@ export function getStatusLabel(status) {
   return {
     live: 'جارية الآن',
     upcoming: 'قادمة',
+    scheduled: 'مجدولة',
     ended: 'انتهت',
     canceled: 'ملغاة',
     active: 'نشطة',
@@ -167,6 +192,7 @@ export function getStatusClass(status) {
   return {
     live: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     upcoming: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    scheduled: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     ended: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
     canceled: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
     active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',

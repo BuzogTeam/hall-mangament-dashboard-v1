@@ -59,7 +59,9 @@ export const PERMISSIONS = [
   ['lectures.view', 'عرض المحاضرات'],
   ['lectures.create', 'إضافة المحاضرات'],
   ['lectures.update', 'تعديل المحاضرات'],
-  ['lectures.cancel', 'إلغاء المحاضرات'],
+  ['lectures.cancel_series', 'إلغاء السلسلة الأسبوعية'],
+  ['lectures.cancel_occurrence', 'إلغاء محاضرة لتاريخ محدد'],
+  ['lectures.cancel', 'إلغاء المحاضرات (توافق قديم)'],
   ['users.view', 'عرض المستخدمين'],
   ['users.manage', 'إدارة المستخدمين'],
   ['roles.view', 'عرض الأدوار والصلاحيات'],
@@ -74,10 +76,10 @@ export const ROLE_PERMISSIONS = {
   super_admin: PERMISSIONS.map(([key]) => key),
   admin: allCatalog.filter((key) => !key.startsWith('dashboard.') || key === 'dashboard.view'),
   schedule_manager: [
-    'dashboard.view', 'halls.view', 'hall_reservations.view', 'hall_reservations.create', 'hall_reservations.update', 'hall_reservations.cancel', 'lectures.view', 'lectures.create', 'lectures.update', 'lectures.cancel', 'reports.view', 'settings.view',
+    'dashboard.view', 'halls.view', 'hall_reservations.view', 'hall_reservations.create', 'hall_reservations.update', 'hall_reservations.cancel', 'lectures.view', 'lectures.create', 'lectures.update', 'lectures.cancel_series', 'lectures.cancel_occurrence', 'lectures.cancel', 'reports.view', 'settings.view',
   ],
   department_manager: [
-    'dashboard.view', 'departments.view', 'levels.view', 'batches.view', 'batches.create', 'batches.update', 'subjects.view', 'instructors.view', 'halls.view', 'hall_reservations.view', 'lectures.view', 'lectures.create', 'lectures.update', 'lectures.cancel', 'reports.view', 'settings.view',
+    'dashboard.view', 'departments.view', 'levels.view', 'batches.view', 'batches.create', 'batches.update', 'subjects.view', 'instructors.view', 'halls.view', 'hall_reservations.view', 'hall_reservations.create', 'hall_reservations.update', 'hall_reservations.cancel', 'lectures.view', 'lectures.create', 'lectures.update', 'lectures.cancel_occurrence', 'reports.view', 'settings.view',
   ],
   viewer: [
     'dashboard.view', 'buildings.view', 'halls.view', 'departments.view', 'levels.view', 'batches.view', 'subjects.view', 'instructors.view', 'lectures.view', 'reports.view', 'settings.view',
