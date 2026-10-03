@@ -4,6 +4,3 @@ dist
 .env.local
 .DS_Store
 .vscode
-echo ".config/" >> .gitignore
-echo ".local/" >> .gitignore
-echo ".sudo_as_admin_successful" >> .gitignore

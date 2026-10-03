@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { can } from '../../lib/permissions'
+import { includesText } from '../../lib/utils'
 import { explainDatabaseError } from '../../services/baseService'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
@@ -96,7 +97,8 @@ export function CrudResourcePage({
     let rows = query.data || []
     if (search) rows = rows.filter((row) => searchFields.some((field) => {
       const value = typeof field === 'function' ? field(row) : row[field]
-      return String(value ?? '').toLocaleLowerCase('ar').includes(search.toLocaleLowerCase('ar'))
+      if (Array.isArray(value)) return includesText(value.join(' '), search)
+      return includesText(value, search)
     }))
     if (filterData) rows = filterData(rows, filters)
     return rows

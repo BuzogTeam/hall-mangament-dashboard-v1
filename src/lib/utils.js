@@ -21,7 +21,17 @@ export const ENUM_OPTIONS = {
   hallTypes: ['قاعة', 'مدرج', 'مرسم', 'معمل'],
   subjectTypes: ['نظري', 'عملي', 'تمارين'],
   instructorTypes: ['دكتور', 'استاذ', 'مهندس'],
-  groups: ['الكل', 'المجموعة الاولى', 'المجموعة الثانية', 'المجموعة الثالثة'],
+  groups: [1, 2, 3, 4, 5],
+}
+
+export function normalizeGroups(value) {
+  const values = Array.isArray(value) ? value : value === null || value === undefined || value === '' ? [] : [value]
+  return [...new Set(values.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item > 0))].sort((a, b) => a - b)
+}
+
+export function formatGroups(value) {
+  const groups = normalizeGroups(value)
+  return groups.length ? groups.map((group) => `المجموعة ${group}`).join('، ') : '—'
 }
 
 export const DAY_ORDER = DAY_OPTIONS.map((day) => day.value)

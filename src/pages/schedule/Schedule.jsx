@@ -10,7 +10,7 @@ import { instructorsService } from '../../services/instructorsService'
 import { useAuth } from '../../context/AuthContext'
 import { can } from '../../lib/permissions'
 import { usePageTitle } from '../../hooks/usePageTitle'
-import { DAY_OPTIONS, formatTime, getDayLabel, getLectureStatus, getStatusLabel, getTodayDbValue, getWeekDates, parseLocalDate, timeToMinutes, toDateKey } from '../../lib/utils'
+import { DAY_OPTIONS, formatGroups, formatTime, getDayLabel, getLectureStatus, getStatusLabel, getTodayDbValue, getWeekDates, parseLocalDate, timeToMinutes, toDateKey } from '../../lib/utils'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { Select } from '../../components/ui/select'
@@ -77,7 +77,7 @@ export function Schedule() {
   const exportCsv = () => {
     const headers = ['التاريخ', 'اليوم', 'وقت البداية', 'وقت النهاية', 'المادة', 'المدرس', 'القاعة', 'القسم', 'الدفعة', 'المجموعة', 'الحالة']
     const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`
-    const lines = [headers, ...exportRows.map((row) => [row.occurrenceDate, getDayLabel(row.day_of_week), row.start_at, row.end_at, row.subject?.title, row.instructor?.name, row.hall?.title, row.batch?.department?.title || row.batch?.department_abbr, row.batch?.level?.title, row.group, row.occurrenceCanceled ? 'ملغاة لهذا اليوم' : getStatusLabel(getScheduleStatus(row, parseLocalDate(row.occurrenceDate)))])].map((line) => line.map(escape).join(','))
+    const lines = [headers, ...exportRows.map((row) => [row.occurrenceDate, getDayLabel(row.day_of_week), row.start_at, row.end_at, row.subject?.title, row.instructor?.name, row.hall?.title, row.batch?.department?.title || row.batch?.department_abbr, row.batch?.level?.title, formatGroups(row.groups), row.occurrenceCanceled ? 'ملغاة لهذا اليوم' : getStatusLabel(getScheduleStatus(row, parseLocalDate(row.occurrenceDate)))])].map((line) => line.map(escape).join(','))
     const blob = new Blob([`\ufeff${lines.join('\n')}`], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')

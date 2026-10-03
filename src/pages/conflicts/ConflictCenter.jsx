@@ -6,7 +6,7 @@ import { conflictsService } from '../../services/conflictsService'
 import { lecturesService } from '../../services/lecturesService'
 import { useAuth } from '../../context/AuthContext'
 import { can } from '../../lib/permissions'
-import { getDayLabel, formatTime } from '../../lib/utils'
+import { formatGroups, getDayLabel, formatTime } from '../../lib/utils'
 import { usePageTitle } from '../../hooks/usePageTitle'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
@@ -48,7 +48,7 @@ function ConflictCard({ conflict, first, second, profile }) {
 function LectureMiniCard({ lecture, id, profile }) {
   if (!lecture) return <div className="rounded-xl border border-dashed border-border p-3 text-xs text-muted-foreground">المحاضرة #{id} غير ظاهرة ضمن نطاق القراءة.</div>
   const canEdit = can(profile, 'lectures.update')
-  return <div className="rounded-xl border border-border bg-card p-3"><p className="truncate text-sm font-black">{lecture.subject?.title || 'مادة غير محددة'}</p><p className="mt-1 text-xs text-muted-foreground">{lecture.instructor?.name || '—'} · قاعة {lecture.hall?.title || '—'}</p><p className="mt-1 text-xs text-muted-foreground">{lecture.batch?.department_abbr} — {lecture.batch?.level?.title}</p>{canEdit ? <Link to={`/lectures?edit=${lecture.id}`} className="mt-3 inline-flex text-xs font-bold text-primary hover:underline">فتح المحاضرة للتعديل ←</Link> : <span className="mt-3 block text-[11px] text-muted-foreground">المحاضرة #{lecture.id}</span>}</div>
+  return <div className="rounded-xl border border-border bg-card p-3"><p className="truncate text-sm font-black">{lecture.subject?.title || 'مادة غير محددة'}</p><p className="mt-1 text-xs text-muted-foreground">{lecture.instructor?.name || '—'} · قاعة {lecture.hall?.title || '—'}</p><p className="mt-1 text-xs text-muted-foreground">{lecture.batch?.department_abbr} — {lecture.batch?.level?.title}</p><p className="mt-1 text-xs font-semibold text-primary">المجموعات: {formatGroups(lecture.groups)}</p>{canEdit ? <Link to={`/lectures?edit=${lecture.id}`} className="mt-3 inline-flex text-xs font-bold text-primary hover:underline">فتح المحاضرة للتعديل ←</Link> : <span className="mt-3 block text-[11px] text-muted-foreground">المحاضرة #{lecture.id}</span>}</div>
 }
 
 function FilterButton({ active, children, onClick }) { return <Button variant={active ? 'secondary' : 'ghost'} size="sm" className="h-8 text-xs" onClick={onClick}>{children}</Button> }

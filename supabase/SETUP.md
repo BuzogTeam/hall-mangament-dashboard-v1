@@ -186,6 +186,14 @@ supabase/migrations/20260830_department_manager_temporary_reservation_scope.sql
 
 هذه الإضافة تستخدم مفاتيح `hall_reservations.*` الموجودة، وتضيف Scope اختياريًا للحجز، وتسمح لمدير القسم بالحجوزات المؤقتة فقط داخل Scope. لا تعِد تشغيل أي Migration قديمة.
 
+إذا تم تعديل جدول `lectures` بإزالة `group` وإضافة `groups` كمصفوفة، شغّل بعد ذلك:
+
+```text
+supabase/migrations/20260830_lecture_groups_array_conflict_repair.sql
+```
+
+وهي تعيد حماية تعارضات المحاضرات وتمنع التعارض بين نفس المجموعة فقط.
+
 لا تحتاج إلى تشغيل الـMigrations المستهدفة القديمة التالية إذا كانت مشاكلها عولجت سابقًا، لأن Migration الشاملة تحتوي سياسات الجداول:
 
 ```text

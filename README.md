@@ -56,6 +56,14 @@ supabase/migrations/20260830_department_manager_temporary_reservation_scope.sql
 
 تضيف هذه Migration أعمدة Scope اختيارية إلى `hall_reservations` للحفاظ على التوافق مع الحجوزات العامة القديمة، وتمنح Department Manager مفاتيح الحجوزات الموجودة أصلًا، مع قصره على الحجز المؤقت فقط.
 
+إذا تم تغيير `lectures.group` إلى `lectures.groups` كمصفوفة، شغّل بعد ذلك Migration إصلاح المجموعات:
+
+```text
+supabase/migrations/20260830_lecture_groups_array_conflict_repair.sql
+```
+
+هذه Migration تعيد Trigger حماية الجدول، وتستخدم تقاطع المصفوفات لمنع التعارض بين نفس المجموعة فقط، مع إبقاء تعارض القاعة والمدرس عامًا.
+
 لا تحذف هذه Migrations صفوف الجداول الأكاديمية أو تعيد تنفيذ Migrations الجدول السابقة. التغيير المقصود على بيانات التفويض هو منح Department Manager صلاحيات الحجوزات المؤقتة ضمن Scope.
 
 إذا كانت Migration النطاقات والحجوزات قد توقفت عند تعليق `SCHEDULE RPC/trigger overrides`، فلا تعِد تشغيل الملف القديم أو Migration الإصلاح القديمة؛ استخدم Migration المرحلة الأولى الحالية أعلاه.

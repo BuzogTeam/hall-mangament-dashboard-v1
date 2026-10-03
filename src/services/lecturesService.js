@@ -3,7 +3,7 @@ import { rangesOverlap, getErrorMessage } from '../lib/utils'
 import { deleteRow, insertRow, selectRows, updateRow } from './baseService'
 
 export const LECTURE_SELECT = [
-  'id', 'created_at', 'day_of_week', 'start_at', 'end_at', 'subject_id', 'hall_id', 'instructor_id', 'canceled', 'group', 'batch_id', 'updated_at',
+  'id', 'created_at', 'day_of_week', 'start_at', 'end_at', 'subject_id', 'hall_id', 'instructor_id', 'canceled', 'groups', 'batch_id', 'updated_at',
   'subject:subjects!lectures_subject_id_fkey(id,title,english_title,type,parent_id)',
   'hall:halls!lectures_hall_id_fkey(id,title,building_id,floor,type,booking,building:buildings!halls_building_id_fkey(id,title))',
   'instructor:instructors!lectures_instructor_id_fkey(id,name,type)',
@@ -16,13 +16,14 @@ export const lecturesService = {
   async findConflicts(payload, excludeId = null) {
     // Prefer the SECURITY DEFINER database function when functions.sql is installed.
     // The fallback keeps the dashboard usable during a staged migration.
-    const { data: rpcRows, error: rpcError } = await supabase.rpc('find_lecture_conflicts', {
+    const { data: rpcRows, error: rpcError } = await supabase.rpc('find_lecture_conflicts_v2', {
       p_day_of_week: payload.day_of_week,
       p_start_at: payload.start_at,
       p_end_at: payload.end_at,
       p_hall_id: Number(payload.hall_id),
       p_instructor_id: Number(payload.instructor_id),
       p_batch_id: Number(payload.batch_id),
+      p_groups: payload.groups || [],
       p_exclude_id: excludeId ? Number(excludeId) : null,
     })
     if (!rpcError) {
